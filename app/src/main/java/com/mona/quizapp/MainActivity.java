@@ -1,8 +1,13 @@
 package com.mona.quizapp;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.PersistableBundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -43,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
 
 
@@ -53,10 +59,19 @@ public class MainActivity extends AppCompatActivity {
         tvScore = (TextView) findViewById(R.id.tv_score);
         pbResult = (ProgressBar) findViewById(R.id.pb_result);
 
+        if (savedInstanceState != null) {
+            score = savedInstanceState.getInt("score");
+            index = savedInstanceState.getInt("index");
+            tvScore.setText("Score: " + score + "/" + questions.length);
+            tvQuestion.setText(questions[index].getQuestionId());
+
+        } else {
+            score = 0;
+            index = 0;
+        }
+
         question = questions[index];
         tvQuestion.setText(question.getQuestionId());
-        tvScore.setText(index+1 + "/" + questions.length);
-
         btnTrue.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -76,11 +91,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateQuestion() {
-        index = (index + 1) % questions.length;
+        index = index < questions.length -1 ? index + 1 : 0;
+        Log.d("Index", "Index " + index);
+        if (index == 0) {
+            AlertDialog.Builder alertDialog = new AlertDialog.Builder(this);
+            alertDialog.setTitle("Game Over");
+            alertDialog.setCancelable(false);
+            alertDialog.setMessage("The game is over. Your total score is " + score + " out of " + questions.length);
+            alertDialog.setPositiveButton("Close dialog", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    finish();
+                }
+            });
+
+            alertDialog.show();
+        }
         question = questions[index];
         tvQuestion.setText(question.getQuestionId());
         pbResult.incrementProgressBy(PROGRESS_BAR_VALUE );
-        tvScore.setText(score + "/" + questions.length);
+        tvScore.setText("Score: " + score + "/" + questions.length);
     }
 
     private void checkAnswer(boolean userSelectAnswer) {
@@ -92,4 +122,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putInt("score", score);
+        outState.putInt("index", index);
+
+    }
 }
